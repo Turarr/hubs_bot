@@ -42,7 +42,7 @@ def webhook():
         return 'EVENT_RECEIVED', 200
 
 def send_message(recipient_id, text):
-    url = f"https://graph.instagram.com/v21.0/{IG_ID}/messages"
+    url = f"https://graph.instagram.com/v25.0/{IG_ID}/messages"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"

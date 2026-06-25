@@ -2,6 +2,7 @@ import os
 import requests
 from flask import Flask, request
 from dotenv import load_dotenv
+from rag import get_answer
 
 load_dotenv()
 
@@ -35,7 +36,8 @@ def webhook():
                         message_text = event.get('message', {}).get('text')
                         
                         if sender_id and message_text:
-                            send_message(sender_id, "Привет! Бот скоро будет готов 🙂")
+                            answer = get_answer(message_text)
+                            send_message(sender_id, answer)
                             
         return 'EVENT_RECEIVED', 200
 

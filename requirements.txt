@@ -2,5 +2,4 @@ flask
 requests
 python-dotenv
 gunicorn
-chromadb
 google-generativeai

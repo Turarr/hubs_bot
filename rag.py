@@ -92,7 +92,7 @@ def get_answer(question: str) -> str:
             prompt = f"{SYSTEM_PROMPT}\n\nКонтекст об Astana Hub:\n{context}\n\nВопрос пользователя: {question}"
 
         print(f"[RAG] Calling Gemini for question: {question[:80]}")
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         print("[RAG] Gemini responded successfully.")
         return response.text

@@ -52,8 +52,9 @@ def webhook():
         return 'OK', 200
 
     if request.method == 'POST':
-        if not verify_signature(request):
-            return make_response("Unauthorized", 401)
+        # Временно отключили проверку подписи:
+        # if not verify_signature(request):
+        #     return make_response("Unauthorized", 401)
             
         data = request.json
         if data and 'entry' in data:

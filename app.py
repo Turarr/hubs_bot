@@ -57,15 +57,18 @@ def webhook():
         #     return make_response("Unauthorized", 401)
             
         data = request.json
+        print(f"[WEBHOOK] Incoming POST data: {data}")
         if data and 'entry' in data:
             for entry in data['entry']:
                 if 'messaging' in entry:
                     for event in entry['messaging']:
                         sender_id = event.get('sender', {}).get('id')
                         message_text = event.get('message', {}).get('text')
-                        
+                        print(f"[WEBHOOK] sender_id={sender_id}, IG_ID={IG_ID}, text={message_text}")
+
                         # Игнорируем сообщения, отправленные самим ботом
                         if sender_id == IG_ID:
+                            print("[WEBHOOK] Skipping own message.")
                             continue
 
                         if sender_id and message_text:
@@ -74,7 +77,9 @@ def webhook():
                             else:
                                 answer = get_answer(message_text)
                                 send_message(sender_id, answer)
-                                
+                        else:
+                            print(f"[WEBHOOK] Skipped event: no sender_id or no text")
+
         return 'EVENT_RECEIVED', 200
 
 def send_message(recipient_id, text):
@@ -88,9 +93,11 @@ def send_message(recipient_id, text):
         "message": {"text": text}
     }
     try:
-        requests.post(url, headers=headers, json=payload)
+        print(f"[SEND] Sending to {recipient_id}: {text[:80]}")
+        resp = requests.post(url, headers=headers, json=payload)
+        print(f"[SEND] Instagram API response: {resp.status_code} — {resp.text}")
     except Exception as e:
-        print(f"Error sending message: {e}")
+        print(f"[SEND] Error sending message: {e}")
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

@@ -75,17 +75,28 @@ def _get_cached_context() -> str:
 
 def get_answer(question: str) -> str:
     try:
+        # Проверка ключа Gemini
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        if not gemini_key:
+            print("[RAG] ERROR: GEMINI_API_KEY is not set!")
+            return "Извините, не получилось обработать запрос, попробуйте ещё раз 🙂"
+
+        genai.configure(api_key=gemini_key)
         context = _get_cached_context()
 
         if not context:
+            print("[RAG] No context available, answering without it.")
             prompt = f"{SYSTEM_PROMPT}\n\nВопрос пользователя: {question}"
         else:
+            print(f"[RAG] Context length: {len(context)} chars")
             prompt = f"{SYSTEM_PROMPT}\n\nКонтекст об Astana Hub:\n{context}\n\nВопрос пользователя: {question}"
 
+        print(f"[RAG] Calling Gemini for question: {question[:80]}")
         model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
+        print("[RAG] Gemini responded successfully.")
         return response.text
 
     except Exception as e:
-        print(f"[RAG] Error generating answer: {e}")
+        print(f"[RAG] Error generating answer: {type(e).__name__}: {e}")
         return "Извините, не получилось обработать запрос, попробуйте ещё раз 🙂"

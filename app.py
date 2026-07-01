@@ -29,8 +29,13 @@ def is_injection(text):
 def verify_signature(request):
     signature = request.headers.get("X-Hub-Signature-256", "")
     body = request.get_data()
-    expected = "sha256=" + hmac.new(APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(signature, expected)
+    expected = "sha256=" + hmac.new(APP_SECRET.encode('utf-8'), body, hashlib.sha256).hexdigest()
+    
+    is_valid = hmac.compare_digest(signature, expected)
+    if not is_valid:
+        print(f"[AUTH ERROR] Signature mismatch! Received: {signature}")
+        # print(f"Expected: {expected}") # Не выводим ожидаемую подпись в логи на всякий случай для безопасности
+    return is_valid
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():

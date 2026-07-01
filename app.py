@@ -1,6 +1,8 @@
 import os
+import hmac
+import hashlib
 import requests
-from flask import Flask, request
+from flask import Flask, request, make_response
 from dotenv import load_dotenv
 from rag import get_answer
 
@@ -11,6 +13,24 @@ app = Flask(__name__)
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN")
 ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
 IG_ID = os.environ.get("IG_ID")
+APP_SECRET = os.environ.get("APP_SECRET", "")
+
+BLOCKED_PHRASES = [
+    "ignore previous", "forget instructions", "system prompt",
+    "ignore instructions", "new role", "pretend you are",
+    "забудь инструкции", "игнорируй", "системный промпт"
+]
+
+def is_injection(text):
+    if not text:
+        return False
+    return any(phrase in text.lower() for phrase in BLOCKED_PHRASES)
+
+def verify_signature(request):
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    body = request.get_data()
+    expected = "sha256=" + hmac.new(APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(signature, expected)
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -27,6 +47,9 @@ def webhook():
         return 'OK', 200
 
     if request.method == 'POST':
+        if not verify_signature(request):
+            return make_response("Unauthorized", 401)
+            
         data = request.json
         if data and 'entry' in data:
             for entry in data['entry']:
@@ -36,9 +59,12 @@ def webhook():
                         message_text = event.get('message', {}).get('text')
                         
                         if sender_id and message_text:
-                            answer = get_answer(message_text)
-                            send_message(sender_id, answer)
-                            
+                            if is_injection(message_text):
+                                send_message(sender_id, "Я ассистент Astana Hub и могу помочь только по теме хаба 🙂")
+                            else:
+                                answer = get_answer(message_text)
+                                send_message(sender_id, answer)
+                                
         return 'EVENT_RECEIVED', 200
 
 def send_message(recipient_id, text):

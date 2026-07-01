@@ -64,6 +64,10 @@ def webhook():
                         sender_id = event.get('sender', {}).get('id')
                         message_text = event.get('message', {}).get('text')
                         
+                        # Игнорируем сообщения, отправленные самим ботом
+                        if sender_id == IG_ID:
+                            continue
+
                         if sender_id and message_text:
                             if is_injection(message_text):
                                 send_message(sender_id, "Я ассистент Astana Hub и могу помочь только по теме хаба 🙂")
